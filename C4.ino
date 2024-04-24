@@ -2,16 +2,16 @@
 #include <Keypad.h> //inclusão da biblioteca teclado matricial
 #include <string.h>
 #define LedVermelho 12 //definição pino dos leds
-#define LedVerde 13
+#define LedVerde 13  //definição pino dos leds
+#define rele1 2 //pino do rele 1
 #define tempo 10 //tempo do som
-
+#define autofalante 7 //pino do autofalante
 
 char* senha = "7355608"; //definir uma senha TODO -> VER COM A EQUIPE
 int posicao = 0; //posição do numero na senha
-int time = 3600; // contador time
+int time = 30; // contador time //tempo ate explodir //em segundos
 const byte rows = 4; //numero de linhas e colunas do teclado
 const byte cols = 4;
-int autofalante = 7; //pino do autofalante
 int freq = 2000;   //frequencia para o bip
 int dur = 120;     //duração do bip
 int codepos = 0;
@@ -32,31 +32,53 @@ byte colPins [cols] = {6, 5, 4, 3}; //colunas
 
 Keypad myKeypad = Keypad( makeKeymap(keyMap), rowPins, colPins, rows, cols);
 
-LiquidCrystal_I2C lcd(0x27, 2, 1, 0, 4, 5, 6, 7, 3, POSITIVE); //endereço I2c módulo display
+//VER PARA TROCAR ESSE ENDEREÇO
+LiquidCrystal_I2C lcd(0x27, 2, 1, 0, 4, 5, 6, 7, 3, POSITIVE); //endereço I2c módulo display //baixar biblioteca certa para usar esse
+//LiquidCrystal_I2C lcd(32, 16, 2); // Address, 16 columns, 2 rows //para thinkercad
 
-void setup() {
 
+void setup() 
+{
   lcd.begin(16, 2);
   pinMode(LedVermelho, OUTPUT);  //setando o led como saída
-  pinMode(LedVerde, OUTPUT);
+  pinMode(LedVerde, OUTPUT);  //setando o led como saída
+  pinMode(rele1, OUTPUT); //setando rele como saida
   lcd.setCursor(0, 0);
+  lcd.print("BANZER AIRSOFT");
+  lcd.setCursor(0, 1);
+  lcd.print("TEAM!");
+  delay(4000);
+  lcd.clear();
+  lcd.setCursor(0, 0);
+  lcd.print("BEM VINDOS");
+  lcd.setCursor(0, 1);
+  lcd.print("E BOM JOGO!");
+  delay(4000);
+  lcd.clear();
+  lcd.setCursor(0, 0);
+  lcd.print("Senha Ativacao:");
+  lcd.setCursor(0, 1);
   lcd.print("*******");
-  lcd.setCursor(0, 0);
 }
 
-void contador(int tempoinicial) { //rotina de acionamento da bomba
+void contador(int tempoinicial) { //rotina de acionamento da bomba - pega o tempo em que a bomba é ativada para ir reduzindo do tempo total.
   lcd.clear();
-  lcd.print("*******");
+  lcd.print("C4 ARMADA   ");
   lcd.setCursor(0, 1);
-  lcd.print("C4 ARMADA  ");
+  lcd.print("*******");
+  
   int count = time;
+
   while (count > 0) {
 
     char numteclado;
     numteclado = keyget();
       Serial.println("Scanning...");
+    
+    //lcd.setCursor(0, 1);
+    //lcd.print(numteclado);
 
-    if (numteclado == '*' || numteclado == '#') { //reseta senha
+    if (numteclado == 'C') { //reseta senha
       posicao = 0;
     }
     if (numteclado == senha [posicao]) {
@@ -76,10 +98,21 @@ void contador(int tempoinicial) { //rotina de acionamento da bomba
       digitalWrite(LedVerde, HIGH);
       delay(150);
       digitalWrite(LedVerde, LOW);
-      delay(150);
-      delay(150);
+      delay(300);
       digitalWrite(LedVerde, HIGH);
       digitalWrite(LedVermelho, LOW);
+      digitalWrite(rele1, HIGH);
+      delay(5000);
+      digitalWrite(rele1, LOW);
+      delay(1000);
+      digitalWrite(rele1, HIGH);
+      delay(5000);
+      digitalWrite(rele1, LOW);
+      delay(1000);
+      digitalWrite(rele1, HIGH);
+      delay(5000);
+      digitalWrite(rele1, LOW);
+      delay(1000);
       while(numteclado != 'D');      
     }
 
@@ -88,55 +121,51 @@ void contador(int tempoinicial) { //rotina de acionamento da bomba
     lcd.print("C4 ARMADA  ");
     lcd.print(temporestante);
 
-    if (temporestante < 10) { //Colocar 0 na frente quando for menor que 10
+    if (temporestante < 10) { // /trecho que adiciona um zero quando a contagem for menor que 10
       lcd.setCursor(10, 1);
       lcd.print("0");
       lcd.setCursor(12, 1);
-      lcd.print(" ");
+      lcd.print(" "); //printa o tempo restante menor que 10.
     }
 
-    if (temporestante == 30) { //rotinas para mudança da velocidade do bip
+    if (temporestante == 300) { //5min  //rotinas para mudança da velocidade do bip
       intervalo = 800;
     }
-
-    if (temporestante == 25) {
+    if (temporestante == 120) { //2min
       intervalo = 700;
     }
-
-    if (temporestante == 20) {
+    if (temporestante == 60) { //1min
       intervalo = 600;
     }
-
-    if (temporestante == 15) {
+    if (temporestante == 30) { //30 seg
       intervalo = 400;
     }
-
-    if (temporestante == 10) {
+    if (temporestante == 15) { //15 seg
       intervalo = 250;
     }
-    if (temporestante == 5) {
+    if (temporestante == 5) {  //5 seg
       intervalo = 150;
     }
-    if (temporestante == 2) {
+    if (temporestante == 2) {  //2 seg
       intervalo = 1;
     }
 
-    int currentMillis = millis();
+    int currentMillis = millis(); //rotina para piscar led durante contagem
+
     if (currentMillis - previousMillis >= intervalo) {
 
       previousMillis = currentMillis;
 
-      if (estadoled == LOW) {//Led piscando durante a contagem
+      if (estadoled == LOW) { //Led piscando durante a contagem
         estadoled = HIGH;
       } else {
         estadoled = LOW;
       }
-
-      digitalWrite(12, estadoled);
+      digitalWrite(LedVermelho, estadoled);
       tone(autofalante, freq, dur);
     }
 
-    if (temporestante <= 0) { //Mensagem se o tempo acabar
+    if (temporestante <= 0) { // Quando a bomba explode - Mensagem se o tempo acabar
       lcd.clear();
       lcd.setCursor(0, 0);
       lcd.print("DETONADA");
@@ -149,19 +178,21 @@ void contador(int tempoinicial) { //rotina de acionamento da bomba
       digitalWrite(LedVermelho, HIGH);
       delay(150);
       digitalWrite(LedVermelho, LOW);
-      delay(150);
-      delay(150);
+      delay(300);
       digitalWrite(LedVermelho, HIGH);
       tocarsom();
+      delay(500);
+      digitalWrite(rele1, HIGH);
+      delay(15000);
+      digitalWrite(rele1, LOW);
       while (1);
-      
     }
 
   }
   return;
 }
 
-void tocarsom() { //som quando perfe
+void tocarsom() { //som quando perde
    for (frequencia =150; frequencia < 1800; frequencia += 1)
   {
     tone(autofalante, frequencia, tempo);
@@ -175,40 +206,48 @@ void tocarsom() { //som quando perfe
 }
 
 
-char keyget() {
-  char numteclado = myKeypad.getKey(); //define qual tecla é pressionada com getKey
-
+char keyget() { //leitura da tecla pressionada
+  char numteclado = myKeypad.getKey();  //define qual tecla é pressionada com getKey
+  
+  //if (numteclado) {
+  //  lcd.setCursor(0, 1);
+  //  lcd.print(numteclado);
+  //}
+  
   if (numteclado >= '0') { //posição da senha
     codepos++;
   }
 
-  if (numteclado == '*' || numteclado == '#') { //reseta senha
+  if (numteclado == 'C') { //reseta senha
 
     posicao = 0;
 
     lcd.clear();
-    lcd.setCursor(0, 0);
+    lcd.setCursor(0, 1);
     lcd.print(" RESETADO!");
     delay(100);
     lcd.clear();
     lcd.print("*******");
     codepos = 0;
-    lcd.setCursor(0, 0);
+    lcd.setCursor(0, 1);
   }
 
-  if (codepos >=7) {
+  if (codepos >=7) //se a senha for maior ou igual a 7 caracteres e nao for correta, avanca mais um para dar >8 é recomençar
+  {
     codepos++;
   }
 
-  if (codepos > 8) {
+  if (codepos > 8) // se a senha for maior que 8 caracteres, limpa tudo e recomeça
+  {
     lcd.clear();
     codepos = 0;
     lcd.print("*******");
-    lcd.setCursor(0, 0);
+    lcd.setCursor(0, 1);
   }
 
-  lcd.setCursor(codepos - 1, 0);
-  if (numteclado != NO_KEY) {
+  lcd.setCursor(codepos - 1, 1); //posição onde ficam a senha digitada no lcd
+  if (numteclado != NO_KEY)
+   {
 
     //rotina para um som diferente para cada tecla pressionada
 
@@ -233,7 +272,7 @@ char keyget() {
     }
 
     if (numteclado == '5') {
-      tone(autofalante, freq * 2, dur);
+      tone(autofalante, freq, dur);
       lcd.print(5);
     }
 
@@ -243,7 +282,7 @@ char keyget() {
     }
 
     if (numteclado == '7') {
-      tone(autofalante, freq * 2.5, dur);
+      tone(autofalante, freq * 1.25, dur);
       lcd.print(7);
     }
 
@@ -268,17 +307,17 @@ char keyget() {
     }
     
     if (numteclado == 'C') {
-      tone(autofalante, freq * 6.25, dur);
+      tone(autofalante, freq * 3, dur);
       lcd.print('C');
     }
     
     if (numteclado == 'D') {
-      tone(autofalante, freq * 7.25, dur);
+      tone(autofalante, freq, dur);
       lcd.print('D');
     }
     
     if (numteclado == '0') {
-      tone(autofalante, freq * 3.25, dur);
+      tone(autofalante, freq, dur);
       lcd.print(0);
     }
     
@@ -287,42 +326,31 @@ char keyget() {
 }
 
 
-void loop() {
+void loop() { //atribui função para as teclas "C" 
   char numteclado;
   numteclado = keyget();
-  if (numteclado == '*') {
+  if (numteclado == 'C') {
 
     posicao = 0;
 
     lcd.clear();
     lcd.setCursor(0, 0);
-    lcd.print("RESETADO!");
+    lcd.print("SENHA CLEAR!");
     delay(1000);
     lcd.clear();
+    lcd.setCursor(0, 0);
+    lcd.print("Senha Ativacao!");
+    lcd.setCursor(0, 1);
     lcd.print("*******");
     codepos = 0;
-    lcd.setCursor(0, 0);
-  }
-
- if (numteclado == '#' || numteclado == '*') {
-
-    posicao = 0;
-
-    lcd.clear();
-    lcd.setCursor(0, 0);
-    lcd.print(" RESETADO!");
-    delay(1000);
-    lcd.clear();
-    lcd.print("*******");
-    codepos = 0;
-    lcd.setCursor(0, 0);
+    lcd.setCursor(0, 1);
   }
   
   if (numteclado == senha [posicao]) {
 
     posicao ++;
   }
-  if (posicao == strlen(senha)) {
+  if (posicao == strlen(senha)) { //divide pela metade o tempo de desativação
     posicao = 0;
     int tempoinicial = (millis()) / 1000;
     contador(tempoinicial);
